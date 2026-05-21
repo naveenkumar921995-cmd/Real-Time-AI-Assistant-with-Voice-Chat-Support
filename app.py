@@ -1,8 +1,8 @@
 import streamlit as st
 import speech_recognition as sr
-import pywhatkit as pk
-from gtts import gTTS
-import os
+import webbrowser
+
+st.set_page_config(page_title="AI Voice Assistant")
 
 st.title("🎙️ AI Voice Assistant")
 
@@ -10,21 +10,27 @@ recognizer = sr.Recognizer()
 
 if st.button("Start Listening"):
 
-    with sr.Microphone() as source:
-        st.write("Listening...")
-        audio = recognizer.listen(source)
-
     try:
-        text = recognizer.recognize_google(audio)
+        with sr.Microphone() as source:
 
-        st.success(f"You said: {text}")
+            st.write("Listening...")
+            audio = recognizer.listen(source)
 
-        if "play" in text:
-            song = text.replace("play", "")
+            text = recognizer.recognize_google(audio)
 
-            st.write(f"Playing {song}")
+            text = text.lower()
 
-            pk.playonyt(song)
+            st.success(f"You said: {text}")
 
-    except:
-        st.error("Could not understand audio")
+            if "play" in text:
+
+                song = text.replace("play", "")
+
+                st.write(f"Searching YouTube for: {song}")
+
+                youtube_url = f"https://www.youtube.com/results?search_query={song}"
+
+                st.link_button("Open YouTube", youtube_url)
+
+    except Exception as e:
+        st.error(f"Error: {e}")
