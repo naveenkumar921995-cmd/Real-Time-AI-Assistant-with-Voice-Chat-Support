@@ -3,4 +3,3 @@ streamlit-mic-recorder
 SpeechRecognition
 pydub
 ffmpeg-python
-audio-recorder-streamlit
