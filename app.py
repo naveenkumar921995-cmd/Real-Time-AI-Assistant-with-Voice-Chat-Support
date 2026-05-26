@@ -1,63 +1,290 @@
 import streamlit as st
+from groq import Groq
 from streamlit_mic_recorder import mic_recorder
-import speech_recognition as sr
-from pydub import AudioSegment
+import whisper
 import tempfile
 import os
+import time
 
-st.set_page_config(page_title="AI Voice Assistant")
-
-st.title("🎙️ AI Voice Assistant")
-
-audio = mic_recorder(
-    start_prompt="🎤 Start Recording",
-    stop_prompt="⏹️ Stop Recording",
-    just_once=True
+# -------------------------------------------------
+# PAGE CONFIG
+# -------------------------------------------------
+st.set_page_config(
+    page_title="AI Assistant",
+    page_icon="🤖",
+    layout="wide"
 )
 
-if audio:
+# -------------------------------------------------
+# CUSTOM CSS
+# -------------------------------------------------
+st.markdown("""
+<style>
 
-    st.audio(audio["bytes"])
+.stApp {
+    background: linear-gradient(135deg, #0F172A, #1E293B);
+    color: white;
+}
 
-    # Save WEBM audio
-    with tempfile.NamedTemporaryFile(delete=False, suffix=".webm") as temp_webm:
+.chat-user {
+    background: #1E293B;
+    padding: 15px;
+    border-radius: 15px;
+    margin-bottom: 10px;
+    border-left: 5px solid #00FFD1;
+}
 
-        temp_webm.write(audio["bytes"])
+.chat-ai {
+    background: #111827;
+    padding: 15px;
+    border-radius: 15px;
+    margin-bottom: 15px;
+    border-left: 5px solid #38BDF8;
+}
 
-        webm_path = temp_webm.name
+.main-title {
+    text-align: center;
+    font-size: 50px;
+    font-weight: bold;
+    color: #00FFD1;
+}
 
-    # Convert WEBM to WAV
-    sound = AudioSegment.from_file(webm_path)
+.subtitle {
+    text-align: center;
+    color: #CBD5E1;
+    margin-bottom: 30px;
+}
 
-    wav_path = webm_path.replace(".webm", ".wav")
+.stButton > button {
+    border-radius: 12px;
+    height: 50px;
+    font-weight: bold;
+}
 
-    sound.export(wav_path, format="wav")
+</style>
+""", unsafe_allow_html=True)
 
-    recognizer = sr.Recognizer()
+# -------------------------------------------------
+# TITLE
+# -------------------------------------------------
+st.markdown(
+    '<div class="main-title">🤖 AI Assistant</div>',
+    unsafe_allow_html=True
+)
 
-    try:
+st.markdown(
+    '<div class="subtitle">Text + Voice Powered by Groq</div>',
+    unsafe_allow_html=True
+)
 
-        with sr.AudioFile(wav_path) as source:
+# -------------------------------------------------
+# GROQ API
+# -------------------------------------------------
+client = Groq(
+    api_key=st.secrets["GROQ_API_KEY"]
+)
 
-            audio_data = recognizer.record(source)
+# -------------------------------------------------
+# LOAD WHISPER MODEL
+# -------------------------------------------------
+@st.cache_resource
+def load_whisper():
+    return whisper.load_model("base")
 
-            text = recognizer.recognize_google(audio_data)
+whisper_model = load_whisper()
 
-            st.success(f"You said: {text}")
+# -------------------------------------------------
+# SESSION STATE
+# -------------------------------------------------
+if "messages" not in st.session_state:
+    st.session_state.messages = []
 
-            if "play" in text.lower():
+# -------------------------------------------------
+# SIDEBAR
+# -------------------------------------------------
+with st.sidebar:
 
-                song = text.lower().replace("play", "")
+    st.title("⚙️ Settings")
 
-                youtube_url = f"https://www.youtube.com/results?search_query={song}"
+    model = st.selectbox(
+        "Choose Model",
+        [
+            "llama-3.3-70b-versatile",
+            "llama3-8b-8192",
+            "mixtral-8x7b-32768"
+        ]
+    )
 
-                st.link_button("▶ Open YouTube", youtube_url)
+    temperature = st.slider(
+        "Creativity",
+        0.0,
+        1.0,
+        0.7
+    )
 
-    except Exception as e:
+    if st.button("🗑️ Clear Chat"):
+        st.session_state.messages = []
+        st.rerun()
 
-        st.error(f"Recognition Error: {e}")
+# -------------------------------------------------
+# FUNCTION TO GET AI RESPONSE
+# -------------------------------------------------
+def get_ai_response(user_input):
 
-    # Cleanup
-    os.remove(webm_path)
+    st.session_state.messages.append(
+        {
+            "role": "user",
+            "content": user_input
+        }
+    )
 
-    os.remove(wav_path)
+    response = client.chat.completions.create(
+        model=model,
+        messages=st.session_state.messages,
+        temperature=temperature
+    )
+
+    answer = response.choices[0].message.content
+
+    st.session_state.messages.append(
+        {
+            "role": "assistant",
+            "content": answer
+        }
+    )
+
+    return answer
+
+# -------------------------------------------------
+# TABS
+# -------------------------------------------------
+tab1, tab2 = st.tabs(["💬 Text Chat", "🎤 Voice Chat"])
+
+# -------------------------------------------------
+# TEXT CHAT
+# -------------------------------------------------
+with tab1:
+
+    text_input = st.chat_input("Type your message...")
+
+    if text_input:
+
+        st.markdown(
+            f"""
+            <div class="chat-user">
+            <b>🧑 You:</b><br>{text_input}
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+        with st.spinner("Thinking..."):
+
+            answer = get_ai_response(text_input)
+
+        # Streaming Effect
+        placeholder = st.empty()
+
+        streamed = ""
+
+        for char in answer:
+
+            streamed += char
+
+            placeholder.markdown(
+                f"""
+                <div class="chat-ai">
+                <b>🤖 AI:</b><br>{streamed}
+                </div>
+                """,
+                unsafe_allow_html=True
+            )
+
+            time.sleep(0.003)
+
+# -------------------------------------------------
+# VOICE CHAT
+# -------------------------------------------------
+with tab2:
+
+    st.info("Record your voice below")
+
+    audio = mic_recorder(
+        start_prompt="🎙️ Start Recording",
+        stop_prompt="⏹️ Stop Recording",
+        just_once=True,
+        use_container_width=True
+    )
+
+    if audio:
+
+        st.audio(audio["bytes"])
+
+        with tempfile.NamedTemporaryFile(
+            delete=False,
+            suffix=".wav"
+        ) as temp_audio:
+
+            temp_audio.write(audio["bytes"])
+
+            audio_path = temp_audio.name
+
+        # -----------------------------
+        # TRANSCRIBE AUDIO
+        # -----------------------------
+        with st.spinner("Transcribing..."):
+
+            result = whisper_model.transcribe(audio_path)
+
+            voice_text = result["text"]
+
+        st.success(f"🧑 You said: {voice_text}")
+
+        # -----------------------------
+        # GET AI RESPONSE
+        # -----------------------------
+        with st.spinner("Generating response..."):
+
+            answer = get_ai_response(voice_text)
+
+        st.markdown(
+            f"""
+            <div class="chat-ai">
+            <b>🤖 AI:</b><br>{answer}
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+        os.remove(audio_path)
+
+# -------------------------------------------------
+# CHAT HISTORY
+# -------------------------------------------------
+st.divider()
+
+st.subheader("📜 Conversation History")
+
+for msg in st.session_state.messages:
+
+    if msg["role"] == "user":
+
+        st.markdown(
+            f"""
+            <div class="chat-user">
+            <b>🧑 You:</b><br>{msg["content"]}
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
+
+    else:
+
+        st.markdown(
+            f"""
+            <div class="chat-ai">
+            <b>🤖 AI:</b><br>{msg["content"]}
+            </div>
+            """,
+            unsafe_allow_html=True
+        )
