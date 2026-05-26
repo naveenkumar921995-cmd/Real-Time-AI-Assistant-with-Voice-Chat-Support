@@ -114,7 +114,7 @@ BUTTONS
     height: 52px;
     border: none;
     background: linear-gradient(90deg, #06B6D4, #3B82F6);
-    color: white;
+    color: red;
     font-size: 16px;
     font-weight: 600;
     transition: all 0.3s ease;
