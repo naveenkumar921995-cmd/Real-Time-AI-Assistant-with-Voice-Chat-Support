@@ -1,5 +1,6 @@
 streamlit
+groq
 streamlit-mic-recorder
-SpeechRecognition
-pydub
+openai-whisper
 ffmpeg-python
+torch
