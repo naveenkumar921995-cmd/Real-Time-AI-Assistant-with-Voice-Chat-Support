@@ -9,7 +9,7 @@ import time
 # PAGE CONFIG
 # ---------------------------------------------------
 st.set_page_config(
-    page_title="AI Voice & Chat Assistant",
+    page_title="AI Voice Assistant",
     page_icon="🤖",
     layout="wide"
 )
@@ -20,64 +20,161 @@ st.set_page_config(
 st.markdown("""
 <style>
 
+/* ---------------------------------------------------
+IMPORT FONT
+--------------------------------------------------- */
+@import url('https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap');
+
+/* ---------------------------------------------------
+GLOBAL
+--------------------------------------------------- */
+html, body, [class*="css"] {
+    font-family: 'Inter', sans-serif;
+}
+
+/* ---------------------------------------------------
+MAIN APP
+--------------------------------------------------- */
 .stApp {
-    background: linear-gradient(135deg, #0F172A, #1E293B);
+    background:
+        radial-gradient(circle at top left, #1E3A8A 0%, transparent 25%),
+        radial-gradient(circle at bottom right, #0F766E 0%, transparent 25%),
+        linear-gradient(135deg, #020617, #0F172A);
     color: white;
 }
 
-/* Main Title */
+/* ---------------------------------------------------
+TITLE
+--------------------------------------------------- */
 .main-title {
     text-align: center;
-    font-size: 50px;
-    font-weight: bold;
-    color: #00FFD1;
-    margin-top: 10px;
+    font-size: 52px;
+    font-weight: 700;
+    margin-top: 15px;
+    color: white;
 }
 
+.gradient-text {
+    background: linear-gradient(90deg, #38BDF8, #00FFD1);
+    -webkit-background-clip: text;
+    -webkit-text-fill-color: transparent;
+}
+
+/* ---------------------------------------------------
+SUBTITLE
+--------------------------------------------------- */
 .sub-title {
     text-align: center;
     color: #CBD5E1;
     font-size: 18px;
-    margin-bottom: 30px;
+    margin-bottom: 35px;
 }
 
-/* User Chat */
+/* ---------------------------------------------------
+SIDEBAR
+--------------------------------------------------- */
+section[data-testid="stSidebar"] {
+    background: rgba(15, 23, 42, 0.75);
+    backdrop-filter: blur(20px);
+    border-right: 1px solid rgba(255,255,255,0.08);
+}
+
+/* ---------------------------------------------------
+USER CHAT
+--------------------------------------------------- */
 .user-chat {
-    background: #1E293B;
-    padding: 15px;
-    border-radius: 15px;
-    margin-bottom: 12px;
-    border-left: 5px solid #00FFD1;
+    background: rgba(30, 41, 59, 0.75);
+    backdrop-filter: blur(16px);
+    padding: 16px;
+    border-radius: 18px;
+    margin-bottom: 14px;
+    border: 1px solid rgba(255,255,255,0.08);
+    box-shadow: 0 4px 15px rgba(0,0,0,0.25);
 }
 
-/* AI Chat */
+/* ---------------------------------------------------
+AI CHAT
+--------------------------------------------------- */
 .ai-chat {
-    background: #111827;
-    padding: 15px;
-    border-radius: 15px;
-    margin-bottom: 15px;
-    border-left: 5px solid #38BDF8;
+    background: rgba(15, 23, 42, 0.85);
+    backdrop-filter: blur(18px);
+    padding: 18px;
+    border-radius: 18px;
+    margin-bottom: 16px;
+    border: 1px solid rgba(56, 189, 248, 0.25);
+    box-shadow: 0 4px 18px rgba(0,0,0,0.35);
 }
 
-/* Buttons */
+/* ---------------------------------------------------
+BUTTONS
+--------------------------------------------------- */
 .stButton > button {
     width: 100%;
-    border-radius: 12px;
-    height: 50px;
+    border-radius: 14px;
+    height: 52px;
+    border: none;
+    background: linear-gradient(90deg, #06B6D4, #3B82F6);
+    color: white;
     font-size: 16px;
-    font-weight: bold;
+    font-weight: 600;
+    transition: all 0.3s ease;
 }
 
-/* Sidebar */
-section[data-testid="stSidebar"] {
-    background: #111827;
+.stButton > button:hover {
+    transform: translateY(-2px);
+    box-shadow: 0 8px 22px rgba(59,130,246,0.35);
 }
 
-/* Mobile Responsive */
+/* ---------------------------------------------------
+CHAT INPUT
+--------------------------------------------------- */
+.stChatInputContainer {
+    background: rgba(15, 23, 42, 0.8);
+    border-radius: 18px;
+    border: 1px solid rgba(255,255,255,0.08);
+}
+
+/* ---------------------------------------------------
+DOWNLOAD BUTTON
+--------------------------------------------------- */
+.stDownloadButton > button {
+    background: linear-gradient(90deg, #10B981, #06B6D4);
+    color: white;
+    border-radius: 14px;
+    border: none;
+    height: 50px;
+    font-weight: 600;
+}
+
+/* ---------------------------------------------------
+TABS
+--------------------------------------------------- */
+.stTabs [data-baseweb="tab"] {
+    font-size: 16px;
+    font-weight: 600;
+    color: #CBD5E1;
+}
+
+.stTabs [aria-selected="true"] {
+    color: #38BDF8 !important;
+}
+
+/* ---------------------------------------------------
+MOBILE
+--------------------------------------------------- */
 @media (max-width: 768px) {
 
 .main-title {
-    font-size: 35px;
+    font-size: 36px;
+}
+
+.sub-title {
+    font-size: 15px;
+}
+
+.user-chat,
+.ai-chat {
+    padding: 14px;
 }
 
 }
@@ -89,7 +186,7 @@ section[data-testid="stSidebar"] {
 # API KEY CHECK
 # ---------------------------------------------------
 if "GROQ_API_KEY" not in st.secrets:
-    st.error("Groq API Key not found in Streamlit Secrets")
+    st.error("Groq API Key not found")
     st.stop()
 
 # ---------------------------------------------------
@@ -138,12 +235,20 @@ with st.sidebar:
 # TITLE
 # ---------------------------------------------------
 st.markdown(
-    '<div class="main-title">🤖 AI Assistant</div>',
+    """
+    <div class="main-title">
+        <span class="gradient-text">AI Voice Assistant</span>
+    </div>
+    """,
     unsafe_allow_html=True
 )
 
 st.markdown(
-    '<div class="sub-title">Text + Voice Assistant Powered by Groq</div>',
+    """
+    <div class="sub-title">
+        Smart AI Assistant Powered by Groq
+    </div>
+    """,
     unsafe_allow_html=True
 )
 
@@ -182,7 +287,7 @@ def get_ai_response(user_input):
 tab1, tab2 = st.tabs(["💬 Text Chat", "🎤 Voice Chat"])
 
 # ---------------------------------------------------
-# TEXT CHAT TAB
+# TEXT CHAT
 # ---------------------------------------------------
 with tab1:
 
@@ -190,7 +295,6 @@ with tab1:
 
     if user_input:
 
-        # USER MESSAGE
         st.markdown(
             f"""
             <div class="user-chat">
@@ -200,12 +304,10 @@ with tab1:
             unsafe_allow_html=True
         )
 
-        # AI RESPONSE
         with st.spinner("Thinking..."):
 
             answer = get_ai_response(user_input)
 
-        # STREAMING EFFECT
         placeholder = st.empty()
 
         streamed_text = ""
@@ -226,11 +328,11 @@ with tab1:
             time.sleep(0.002)
 
 # ---------------------------------------------------
-# VOICE CHAT TAB
+# VOICE CHAT
 # ---------------------------------------------------
 with tab2:
 
-    st.info("Record your voice below")
+    st.info("Use your microphone to talk with AI")
 
     audio = mic_recorder(
         start_prompt="🎙️ Start Recording",
@@ -252,9 +354,9 @@ with tab2:
 
             audio_path = temp_audio.name
 
-        # -----------------------------------------
-        # TRANSCRIBE AUDIO USING GROQ WHISPER
-        # -----------------------------------------
+        # ------------------------------------------------
+        # TRANSCRIBE AUDIO
+        # ------------------------------------------------
         with st.spinner("Transcribing audio..."):
 
             with open(audio_path, "rb") as audio_file:
@@ -268,9 +370,9 @@ with tab2:
 
         st.success(f"🧑 You said: {voice_text}")
 
-        # -----------------------------------------
+        # ------------------------------------------------
         # AI RESPONSE
-        # -----------------------------------------
+        # ------------------------------------------------
         with st.spinner("Generating response..."):
 
             answer = get_ai_response(voice_text)
@@ -284,7 +386,6 @@ with tab2:
             unsafe_allow_html=True
         )
 
-        # DELETE TEMP FILE
         os.remove(audio_path)
 
 # ---------------------------------------------------
