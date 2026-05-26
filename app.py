@@ -9,7 +9,7 @@ import time
 # PAGE CONFIG
 # ---------------------------------------------------
 st.set_page_config(
-    page_title="AI Voice Assistant",
+    page_title="AI Text & Voice Assistant",
     page_icon="🤖",
     layout="wide"
 )
